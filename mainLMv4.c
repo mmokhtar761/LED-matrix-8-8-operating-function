@@ -15,20 +15,40 @@
 void write_led(unsigned char ti , char wrds[]  );
 void ST_UART_Rc (void) ;
 char READ_UART  (void) ;
-//void ST_UART_Tr (void) ;
-//void WRITE_UART (char word);
+void ST_UART_Tr (void) ;
+void WRITE_UART (char word);
 
 void main(void) {
     unsigned char i ;
-    char STRdis [20];
+    char STRdis [21];
     unsigned char n[3];
-    ST_UART_Rc ()   ;
+    unsigned char s ;
+    const char ms[] ="PLEASE ENTER THE SPEED 0-25: PLEASE ENTER DIGIT LENGTH 1-20: ENTER CHARs: " ;
+    
+    ST_UART_Tr ();
+    for (i=0;i<29;i++)WRITE_UART (ms[i]); //Printing "PLEASE ENTER THE SPEED 0-25: "
+    ST_UART_Rc () ;
+    n[0]  = READ_UART(); // Getting required data Speed
+    n[1]  = READ_UART() ;  
+    n[2]  = '\0';
+    s     = atoi (n) *10 ;
+    
+    ST_UART_Tr ();
+    WRITE_UART (0x0D);
+    for (i=29;i<61;i++)WRITE_UART (ms[i]); //Printing "PLEASE ENTER DIGIT LENGTH 1-20: "
+    ST_UART_Rc ();
     n[0]  = READ_UART(); // Getting required data length in two digits _ limited to 20
     n[1]  = READ_UART() ;  
     n[2]  = '\0';
+    
+    ST_UART_Tr ();
+    WRITE_UART (0x0D);
+    for (i=61;i<75;i++)WRITE_UART (ms[i]);  //Printing "ENTER CHARs: "
+    ST_UART_Rc ();
     for ( i=0;i<atoi (n);i++) STRdis[i] = READ_UART ();// Store aimed data with length n 
     STRdis[atoi (n)] = '\0';
-    for ( i = 0 ;i < 3 ;i++) write_led(240,STRdis);    //Repeat for 3 times
+    
+    for ( i = 0 ;i < 3 ;i++) write_led(s,STRdis);    //Repeat for 3 times
     return;
 }
 
@@ -115,4 +135,18 @@ char READ_UART (void){         // Reading the buffer
     r  =  RCREG  ;
     RCIF = 0 ;
     return r; 
+}
+
+void WRITE_UART (char word){
+    while (!TRMT);
+    TXREG = word ;    
+}
+void ST_UART_Tr (void){
+    BRGH = 1  ;  // HIGH speed baud rate
+    SPBRG= 23 ;  // 4M HZ and 9600 baud rate
+    SYNC = 0  ;  // Asynchronous mode 
+    SPEN = 1  ;  // Enabling serial pins 
+    TX9  = 0  ;  // Only 8 bit data 
+    TXEN = 1  ;  // Enable UART Transmission ** ENABLING CLKs to TSR
+   
 }
